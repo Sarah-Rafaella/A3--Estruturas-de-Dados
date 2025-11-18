@@ -1,0 +1,6 @@
+id,name,type,arrival,start,end,wait,service
+3,Carlos,corporate,08:00,08:00,08:20,0,20
+2,Bruno,preferential,08:05,08:20,08:35,15,15
+5,Eduardo,preferential,08:03,08:35,08:40,32,5
+1,Ana,common,08:10,08:40,08:50,30,10
+4,Debora,common,08:07,08:50,09:02,43,12
