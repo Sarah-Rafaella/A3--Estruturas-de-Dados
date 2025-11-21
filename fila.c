@@ -5,8 +5,8 @@
 /* ==== STRUCT CLIENTE ==== */
 typedef struct {
     int id;
-    char nome[50];
-    int tipo; // 0 comum, 1 preferencial, 2 corporativo
+    char nome[50];  // espaço para até 49 chars + '\0'
+    int tipo;       // 0 comum, 1 preferencial, 2 corporativo
     int tempoAtendimento;
     int horarioChegada;
 } Cliente;
@@ -24,20 +24,26 @@ typedef struct {
     int tamanho;
 } Fila;
 
-/* ==== FUNÇÕES DA FILA ==== */
-
+/* ==== CRIA UMA FILA VAZIA ==== */
 void criarFila(Fila* f) {
     f->inicio = NULL;
     f->fim = NULL;
     f->tamanho = 0;
 }
 
+/* ==== ENFILEIRAR COM CHECAGEM DE ERRO NO MALLOC ==== */
 void enfileirar(Fila* f, Cliente c) {
     No* novo = (No*)malloc(sizeof(No));
+
+    if (!novo) {
+        perror("Erro: falha ao alocar memoria para novo no");
+        exit(1); // erro fatal
+    }
+
     novo->cliente = c;
     novo->prox = NULL;
 
-    if (f->fim == NULL) {
+    if (f->fim == NULL) {  // fila vazia
         f->inicio = novo;
         f->fim = novo;
     } else {
@@ -48,38 +54,45 @@ void enfileirar(Fila* f, Cliente c) {
     f->tamanho++;
 }
 
-Cliente desenfileirar(Fila* f) {
+/* ==== DESENFILEIRAR (RETORNA 1 SE SUCESSO, 0 SE FILA VAZIA) ==== */
+int desenfileirar(Fila* f, Cliente* out) {
     if (f->inicio == NULL) {
-        Cliente vazio = {0};
-        return vazio;
+        return 0; // fila vazia
     }
 
     No* temp = f->inicio;
-    Cliente c = temp->cliente;
-    f->inicio = temp->prox;
+    *out = temp->cliente;
 
+    f->inicio = temp->prox;
     if (f->inicio == NULL)
         f->fim = NULL;
 
     free(temp);
     f->tamanho--;
 
-    return c;
+    return 1;
 }
 
-/* ==== CARREGAR DADOS DO ARQUIVO ==== */
+/* ==== FUNÇÃO PARA ESVAZIAR A FILA (LIBERAR MEMÓRIA) ==== */
+void limparFila(Fila* f) {
+    Cliente temp;
+    while (desenfileirar(f, &temp)) { }
+}
 
+/* ==== CARREGAR DADOS DE ARQUIVO COM SEGURANÇA ==== */
 void carregarDados(char* nomeArquivo, Fila* comum, Fila* pref, Fila* corp) {
     FILE* arq = fopen(nomeArquivo, "r");
+
     if (!arq) {
-        printf("Erro ao abrir arquivo!\n");
+        perror("Erro ao abrir arquivo");
         return;
     }
 
     Cliente c;
-    while (fscanf(arq, "%d %s %d %d %d",
+
+    while (fscanf(arq, "%d %49s %d %d %d",
                   &c.id, c.nome, &c.tipo,
-                  &c.tempoAtendimento, &c.horarioChegada) != EOF) {
+                  &c.tempoAtendimento, &c.horarioChegada) == 5) {
 
         if (c.tipo == 0)
             enfileirar(comum, c);
@@ -87,6 +100,8 @@ void carregarDados(char* nomeArquivo, Fila* comum, Fila* pref, Fila* corp) {
             enfileirar(pref, c);
         else if (c.tipo == 2)
             enfileirar(corp, c);
+        else
+            printf("Aviso: cliente com tipo invalido (%d) ignorado.\n", c.tipo);
     }
 
     fclose(arq);
