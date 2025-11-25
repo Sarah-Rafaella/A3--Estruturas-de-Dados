@@ -1,0 +1,5 @@
+clients_attended: 5
+average_wait: 24.00
+total_service_minutes: 62
+structure_used: Filas simples encadeadas
+sorting_algorithm: (definir pela equipe)
